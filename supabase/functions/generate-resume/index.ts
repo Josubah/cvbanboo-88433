@@ -93,7 +93,10 @@ Crie um currículo otimizado para essa vaga em formato HTML limpo, incorporando 
     }
 
     const data = await response.json();
-    const generatedResume = data.choices[0].message.content;
+    let generatedResume = data.choices[0].message.content;
+    
+    // Remove markdown code blocks if present
+    generatedResume = generatedResume.replace(/```html\n?/g, '').replace(/```\n?/g, '').trim();
 
     console.log('Resume generated successfully');
 
