@@ -1,7 +1,4 @@
 import { useState } from "react";
-import { Hero } from "@/components/Hero";
-import { Features } from "@/components/Features";
-import { HowItWorks } from "@/components/HowItWorks";
 import { ResumeForm, type ResumeData } from "@/components/ResumeForm";
 import { ResumePreview } from "@/components/ResumePreview";
 import { useToast } from "@/hooks/use-toast";
@@ -10,11 +7,6 @@ const Index = () => {
   const { toast } = useToast();
   const [isGenerating, setIsGenerating] = useState(false);
   const [generatedResume, setGeneratedResume] = useState<string | null>(null);
-
-  const handleGetStarted = () => {
-    const formSection = document.getElementById("form");
-    formSection?.scrollIntoView({ behavior: "smooth" });
-  };
 
   const handleGenerate = async (data: ResumeData) => {
     setIsGenerating(true);
@@ -140,10 +132,7 @@ const Index = () => {
   }
 
   return (
-    <main className="min-h-screen">
-      <Hero onGetStarted={handleGetStarted} />
-      <Features />
-      <HowItWorks />
+    <main className="min-h-screen bg-background">
       <ResumeForm onGenerate={handleGenerate} isLoading={isGenerating} />
     </main>
   );
