@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { ResumeForm, type ResumeData } from "@/components/ResumeForm";
 import { ResumePreview } from "@/components/ResumePreview";
+import { ThemeToggle } from "@/components/ThemeToggle";
 import { useToast } from "@/hooks/use-toast";
 
 const Index = () => {
@@ -133,6 +134,7 @@ const Index = () => {
 
   return (
     <main className="min-h-screen bg-background">
+      <ThemeToggle />
       <ResumeForm onGenerate={handleGenerate} isLoading={isGenerating} />
     </main>
   );
