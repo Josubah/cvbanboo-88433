@@ -20,51 +20,37 @@ const Index = () => {
     setIsGenerating(true);
     
     try {
-      // TODO: Integrate with Lovable Cloud AI function
-      // For now, we'll simulate the generation
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      
-      const mockResume = `
-        <div class="space-y-6">
-          <div class="text-center space-y-2">
-            <h1 class="text-3xl font-bold text-foreground">${data.fullName}</h1>
-            <div class="text-muted-foreground space-y-1">
-              <p>${data.email} ${data.phone ? `• ${data.phone}` : ''}</p>
-              ${data.linkedin ? `<p>${data.linkedin}</p>` : ''}
-            </div>
-          </div>
-          
-          ${data.summary ? `
-          <div class="space-y-2">
-            <h2 class="text-xl font-bold text-foreground border-b-2 border-primary pb-1">RESUMO PROFISSIONAL</h2>
-            <p class="text-foreground">${data.summary}</p>
-          </div>
-          ` : ''}
-          
-          ${data.experience ? `
-          <div class="space-y-2">
-            <h2 class="text-xl font-bold text-foreground border-b-2 border-primary pb-1">EXPERIÊNCIA PROFISSIONAL</h2>
-            <p class="text-foreground whitespace-pre-line">${data.experience}</p>
-          </div>
-          ` : ''}
-          
-          ${data.education ? `
-          <div class="space-y-2">
-            <h2 class="text-xl font-bold text-foreground border-b-2 border-primary pb-1">FORMAÇÃO ACADÊMICA</h2>
-            <p class="text-foreground whitespace-pre-line">${data.education}</p>
-          </div>
-          ` : ''}
-          
-          ${data.skills ? `
-          <div class="space-y-2">
-            <h2 class="text-xl font-bold text-foreground border-b-2 border-primary pb-1">HABILIDADES</h2>
-            <p class="text-foreground whitespace-pre-line">${data.skills}</p>
-          </div>
-          ` : ''}
-        </div>
-      `;
-      
-      setGeneratedResume(mockResume);
+      const response = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/generate-resume`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+          },
+          body: JSON.stringify({
+            jobAd: data.jobAd,
+            userData: {
+              fullName: data.fullName,
+              email: data.email,
+              phone: data.phone,
+              linkedin: data.linkedin,
+              summary: data.summary,
+              experience: data.experience,
+              education: data.education,
+              skills: data.skills,
+            },
+          }),
+        }
+      );
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Erro ao gerar currículo');
+      }
+
+      const { resume } = await response.json();
+      setGeneratedResume(resume);
       
       toast({
         title: "Currículo gerado com sucesso!",
@@ -77,9 +63,10 @@ const Index = () => {
       }, 100);
       
     } catch (error) {
+      console.error('Error generating resume:', error);
       toast({
         title: "Erro ao gerar currículo",
-        description: "Tente novamente em alguns instantes.",
+        description: error instanceof Error ? error.message : "Tente novamente em alguns instantes.",
         variant: "destructive",
       });
     } finally {
@@ -88,10 +75,54 @@ const Index = () => {
   };
 
   const handleDownload = () => {
-    toast({
-      title: "Download em breve!",
-      description: "Funcionalidade de download será implementada em breve.",
-    });
+    if (!generatedResume) return;
+    
+    // Create a printable version
+    const printWindow = window.open('', '_blank');
+    if (!printWindow) {
+      toast({
+        title: "Erro ao abrir janela",
+        description: "Permita pop-ups para baixar o PDF.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    printWindow.document.write(`
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <title>Currículo</title>
+          <style>
+            body {
+              font-family: Arial, sans-serif;
+              line-height: 1.6;
+              color: #333;
+              max-width: 800px;
+              margin: 0 auto;
+              padding: 40px 20px;
+            }
+            h1 { font-size: 28px; margin-bottom: 8px; }
+            h2 { font-size: 20px; border-bottom: 2px solid #2563eb; padding-bottom: 4px; margin-top: 24px; margin-bottom: 12px; }
+            p { margin: 8px 0; }
+            .space-y-6 > * + * { margin-top: 24px; }
+            .space-y-2 > * + * { margin-top: 8px; }
+            .space-y-1 > * + * { margin-top: 4px; }
+            @media print {
+              body { padding: 20px; }
+            }
+          </style>
+        </head>
+        <body>
+          ${generatedResume}
+        </body>
+      </html>
+    `);
+    printWindow.document.close();
+    
+    setTimeout(() => {
+      printWindow.print();
+    }, 250);
   };
 
   const handleBack = () => {
